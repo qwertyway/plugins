@@ -268,8 +268,7 @@ class MethodCallHandlerImpl
     }
     // The proration mode value has to match one of the following declared in
     // https://developer.android.com/reference/com/android/billingclient/api/BillingFlowParams.ProrationMode
-    //TODO causes crash
-//    paramsBuilder.setReplaceSkusProrationMode(prorationMode);
+    paramsBuilder.setReplaceSkusProrationMode(prorationMode);
     result.success(
         Translator.fromBillingResult(
             billingClient.launchBillingFlow(activity, paramsBuilder.build())));
