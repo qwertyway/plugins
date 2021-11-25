@@ -152,22 +152,22 @@
   [handler startProductRequestWithCompletionHandler:^(SKProductsResponse *_Nullable response,
                                                       NSError *_Nullable error) {
     if (error) {
-      result([FlutterError errorWithCode:@"storekit_getproductrequest_platform_error"
-                                 message:error.localizedDescription
-                                 details:error.description]);
+      [self sendResult: result data: [FlutterError errorWithCode:@"storekit_getproductrequest_platform_error"
+                                                                      message:error.localizedDescription
+                                                                      details:error.description]];
       return;
     }
     if (!response) {
-      result([FlutterError errorWithCode:@"storekit_platform_no_response"
-                                 message:@"Failed to get SKProductResponse in startRequest "
-                                         @"call. Error occured on iOS platform"
-                                 details:call.arguments]);
+      [self sendResult: result data: [FlutterError errorWithCode:@"storekit_platform_no_response"
+                                                                     message:@"Failed to get SKProductResponse in startRequest "
+                                                                             @"call. Error occured on iOS platform"
+                                                                     details:call.arguments]];
       return;
     }
     for (SKProduct *product in response.products) {
       [self.productsCache setObject:product forKey:product.productIdentifier];
     }
-    result([FIAObjectTranslator getMapFromSKProductsResponse:response]);
+    [self sendResult: result data:[FIAObjectTranslator getMapFromSKProductsResponse:response]];
     [weakSelf.requestHandlers removeObject:handler];
   }];
 }
@@ -322,12 +322,12 @@
   [handler startProductRequestWithCompletionHandler:^(SKProductsResponse *_Nullable response,
                                                       NSError *_Nullable error) {
     if (error) {
-      result([FlutterError errorWithCode:@"storekit_refreshreceiptrequest_platform_error"
-                                 message:error.localizedDescription
-                                 details:error.description]);
+      [self sendResult: result data: [FlutterError errorWithCode:@"storekit_refreshreceiptrequest_platform_error"
+                                                                      message:error.localizedDescription
+                                                                      details:error.description]];
       return;
     }
-    result(nil);
+    [self sendResult: result data:nil];
     [weakSelf.requestHandlers removeObject:handler];
   }];
 }
@@ -369,6 +369,12 @@
     [_paymentQueueHandler showPriceConsentIfNeeded];
   }
   result(nil);
+}
+
+- (void)sendResult: (FlutterResult)result data:(NSObject*)data {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        result(data);
+    });
 }
 
 #pragma mark - transaction observer:

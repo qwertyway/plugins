@@ -12,6 +12,8 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -50,8 +52,10 @@ class MethodCallHandlerImpl
   @Nullable private Activity activity;
   private final Context applicationContext;
   private final MethodChannel methodChannel;
+  private final Handler handler;
 
   private HashMap<String, SkuDetails> cachedSkus = new HashMap<>();
+
 
   /** Constructs the MethodCallHandlerImpl */
   MethodCallHandlerImpl(
@@ -63,6 +67,7 @@ class MethodCallHandlerImpl
     this.applicationContext = applicationContext;
     this.activity = activity;
     this.methodChannel = methodChannel;
+    this.handler = new Handler(Looper.getMainLooper());
   }
 
   /**
@@ -195,7 +200,7 @@ class MethodCallHandlerImpl
             final Map<String, Object> skuDetailsResponse = new HashMap<>();
             skuDetailsResponse.put("billingResult", Translator.fromBillingResult(billingResult));
             skuDetailsResponse.put("skuDetailsList", fromSkuDetailsList(skuDetailsList));
-            result.success(skuDetailsResponse);
+            sendResultSuccess(result, skuDetailsResponse);
           }
         });
   }
@@ -278,7 +283,7 @@ class MethodCallHandlerImpl
         new ConsumeResponseListener() {
           @Override
           public void onConsumeResponse(BillingResult billingResult, String outToken) {
-            result.success(Translator.fromBillingResult(billingResult));
+            sendResultSuccess(result, Translator.fromBillingResult(billingResult));
           }
         };
     ConsumeParams.Builder paramsBuilder =
@@ -314,9 +319,18 @@ class MethodCallHandlerImpl
             serialized.put("billingResult", Translator.fromBillingResult(billingResult));
             serialized.put(
                 "purchaseHistoryRecordList", fromPurchaseHistoryRecordList(purchasesList));
-            result.success(serialized);
+            sendResultSuccess(result, serialized);
           }
         });
+  }
+
+  private void sendResultSuccess(final MethodChannel.Result result, Object data) {
+    handler.post(new Runnable() {
+      @Override
+      public void run() {
+        result.success(data);
+      }
+    });
   }
 
   private void startConnection(
@@ -340,7 +354,7 @@ class MethodCallHandlerImpl
             alreadyFinished = true;
             // Consider the fact that we've finished a success, leave it to the Dart side to
             // validate the responseCode.
-            result.success(Translator.fromBillingResult(billingResult));
+            sendResultSuccess(result, Translator.fromBillingResult(billingResult));
           }
 
           @Override
@@ -363,7 +377,7 @@ class MethodCallHandlerImpl
         new AcknowledgePurchaseResponseListener() {
           @Override
           public void onAcknowledgePurchaseResponse(BillingResult billingResult) {
-            result.success(Translator.fromBillingResult(billingResult));
+            sendResultSuccess(result, Translator.fromBillingResult(billingResult));
           }
         });
   }
@@ -412,7 +426,7 @@ class MethodCallHandlerImpl
         activity,
         params,
         billingResult -> {
-          result.success(Translator.fromBillingResult(billingResult));
+          sendResultSuccess(result, Translator.fromBillingResult(billingResult));
         });
   }
 

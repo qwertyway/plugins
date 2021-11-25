@@ -22,7 +22,9 @@ dependencies:
   flutter:
     sdk: flutter
   in_app_purchase_platform_interface: ^1.0.0
-  in_app_purchase_android: ^0.1.5
+  in_app_purchase_android:
+    path: ../in_app_purchase_android
+
   # Temporary path-based dependency to allow for renaming.
   in_app_purchase_storekit:
     path: ../in_app_purchase_storekit
