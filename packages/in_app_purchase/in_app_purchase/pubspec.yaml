@@ -22,12 +22,17 @@ dependencies:
   flutter:
     sdk: flutter
   in_app_purchase_platform_interface: ^1.0.0
-  in_app_purchase_android:
-    path: ../in_app_purchase_android
 
-  # Temporary path-based dependency to allow for renaming.
+  in_app_purchase_android:
+    git:
+      url: https://github.com/qwertyway/plugins.git
+      ref: master
+      path: packages/in_app_purchase/in_app_purchase_android
   in_app_purchase_storekit:
-    path: ../in_app_purchase_storekit
+    git:
+      url: https://github.com/qwertyway/plugins.git
+      ref: master
+      path: packages/in_app_purchase/in_app_purchase_storekit
 
 dev_dependencies:
   flutter_driver:
