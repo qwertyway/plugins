@@ -6,8 +6,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:in_app_purchase_storekit/src/in_app_purchase_storekit_platform_addition.dart';
 import 'package:in_app_purchase_platform_interface/in_app_purchase_platform_interface.dart';
+import 'package:in_app_purchase_storekit/src/in_app_purchase_storekit_platform_addition.dart';
 
 import '../in_app_purchase_storekit.dart';
 import '../store_kit_wrappers.dart';
@@ -33,8 +33,7 @@ class InAppPurchaseStoreKitPlatform extends InAppPurchasePlatform {
   @visibleForTesting
   InAppPurchaseStoreKitPlatform();
 
-  Stream<List<PurchaseDetails>> get purchaseStream =>
-      _observer.purchaseUpdatedController.stream;
+  Stream<List<PurchaseDetails>> get purchaseStream => _observer.purchaseUpdatedController.stream;
 
   /// Callback handler for transaction status changes.
   @visibleForTesting
@@ -44,8 +43,7 @@ class InAppPurchaseStoreKitPlatform extends InAppPurchasePlatform {
   static void registerPlatform() {
     // Register the [InAppPurchaseStoreKitPlatformAddition] containing
     // StoreKit-specific functionality.
-    InAppPurchasePlatformAddition.instance =
-        InAppPurchaseStoreKitPlatformAddition();
+    InAppPurchasePlatformAddition.instance = InAppPurchaseStoreKitPlatformAddition();
 
     // Register the platform-specific implementation of the idiomatic
     // InAppPurchase API.
@@ -55,8 +53,7 @@ class InAppPurchaseStoreKitPlatform extends InAppPurchasePlatform {
 
     // Create a purchaseUpdatedController and notify the native side when to
     // start of stop sending updates.
-    StreamController<List<PurchaseDetails>> updateController =
-        StreamController.broadcast(
+    StreamController<List<PurchaseDetails>> updateController = StreamController.broadcast(
       onListen: () => _skPaymentQueueWrapper.startObservingTransactionQueue(),
       onCancel: () => _skPaymentQueueWrapper.stopObservingTransactionQueue(),
     );
@@ -73,17 +70,15 @@ class InAppPurchaseStoreKitPlatform extends InAppPurchasePlatform {
         productIdentifier: purchaseParam.productDetails.id,
         quantity: 1,
         applicationUsername: purchaseParam.applicationUserName,
-        simulatesAskToBuyInSandbox: (purchaseParam is AppStorePurchaseParam)
-            ? purchaseParam.simulatesAskToBuyInSandbox
-            : false,
+        simulatesAskToBuyInSandbox:
+            (purchaseParam is AppStorePurchaseParam) ? purchaseParam.simulatesAskToBuyInSandbox : false,
         requestData: null));
 
     return true; // There's no error feedback from iOS here to return.
   }
 
   @override
-  Future<bool> buyConsumable(
-      {required PurchaseParam purchaseParam, bool autoConsume = true}) {
+  Future<bool> buyConsumable({required PurchaseParam purchaseParam, bool autoConsume = true}) {
     assert(autoConsume == true, 'On iOS, we should always auto consume');
     return buyNonConsumable(purchaseParam: purchaseParam);
   }
@@ -103,9 +98,7 @@ class InAppPurchaseStoreKitPlatform extends InAppPurchasePlatform {
   @override
   Future<void> restorePurchases({String? applicationUserName}) async {
     return _observer
-        .restoreTransactions(
-            queue: _skPaymentQueueWrapper,
-            applicationUserName: applicationUserName)
+        .restoreTransactions(queue: _skPaymentQueueWrapper, applicationUserName: applicationUserName)
         .whenComplete(() => _observer.cleanUpRestoredTransactions());
   }
 
@@ -115,8 +108,7 @@ class InAppPurchaseStoreKitPlatform extends InAppPurchasePlatform {
   /// To get detailed Store Kit product list, use [SkProductResponseWrapper.startProductRequest]
   /// to get the [SKProductResponseWrapper].
   @override
-  Future<ProductDetailsResponse> queryProductDetails(
-      Set<String> identifiers) async {
+  Future<ProductDetailsResponse> queryProductDetails(Set<String> identifiers) async {
     final SKRequestMaker requestMaker = SKRequestMaker();
     SkProductResponseWrapper response;
     PlatformException? exception;
@@ -124,14 +116,12 @@ class InAppPurchaseStoreKitPlatform extends InAppPurchasePlatform {
       response = await requestMaker.startProductRequest(identifiers.toList());
     } on PlatformException catch (e) {
       exception = e;
-      response = SkProductResponseWrapper(
-          products: [], invalidProductIdentifiers: identifiers.toList());
+      response = SkProductResponseWrapper(products: [], invalidProductIdentifiers: identifiers.toList());
     }
     List<AppStoreProductDetails> productDetails = [];
     if (response.products != null) {
       productDetails = response.products
-          .map((SKProductWrapper productWrapper) =>
-              AppStoreProductDetails.fromSKProduct(productWrapper))
+          .map((SKProductWrapper productWrapper) => AppStoreProductDetails.fromSKProduct(productWrapper))
           .toList();
     }
     List<String> invalidIdentifiers = response.invalidProductIdentifiers;
@@ -144,10 +134,7 @@ class InAppPurchaseStoreKitPlatform extends InAppPurchasePlatform {
       error: exception == null
           ? null
           : IAPError(
-              source: kIAPSource,
-              code: exception.code,
-              message: exception.message ?? '',
-              details: exception.details),
+              source: kIAPSource, code: exception.code, message: exception.message ?? '', details: exception.details),
     );
     return productDetailsResponse;
   }
@@ -164,8 +151,7 @@ class _TransactionObserver implements SKTransactionObserverWrapper {
 
   Completer? _restoreCompleter;
   late String _receiptData;
-  _TransactionRestoreState _transactionRestoreState =
-      _TransactionRestoreState.notRunning;
+  _TransactionRestoreState _transactionRestoreState = _TransactionRestoreState.notRunning;
 
   _TransactionObserver(this.purchaseUpdatedController);
 
@@ -174,22 +160,18 @@ class _TransactionObserver implements SKTransactionObserverWrapper {
     String? applicationUserName,
   }) {
     _transactionRestoreState = _TransactionRestoreState.waitingForTransactions;
-    _restoreCompleter = Completer();
-    queue.restoreTransactions(applicationUserName: applicationUserName);
-    return _restoreCompleter!.future;
+    // _restoreCompleter = Completer();
+    return queue.restoreTransactions(applicationUserName: applicationUserName);
+    // return _restoreCompleter!.future;
   }
 
   void cleanUpRestoredTransactions() {
     _restoreCompleter = null;
   }
 
-  void updatedTransactions(
-      {required List<SKPaymentTransactionWrapper> transactions}) async {
-    if (_transactionRestoreState ==
-            _TransactionRestoreState.waitingForTransactions &&
-        transactions.any((transaction) =>
-            transaction.transactionState ==
-            SKPaymentTransactionStateWrapper.restored)) {
+  void updatedTransactions({required List<SKPaymentTransactionWrapper> transactions}) async {
+    if (_transactionRestoreState == _TransactionRestoreState.waitingForTransactions &&
+        transactions.any((transaction) => transaction.transactionState == SKPaymentTransactionStateWrapper.restored)) {
       _transactionRestoreState = _TransactionRestoreState.receivedTransaction;
     }
 
@@ -202,31 +184,28 @@ class _TransactionObserver implements SKTransactionObserverWrapper {
     purchaseUpdatedController.add(purchases);
   }
 
-  void removedTransactions(
-      {required List<SKPaymentTransactionWrapper> transactions}) {}
+  void removedTransactions({required List<SKPaymentTransactionWrapper> transactions}) {}
 
   /// Triggered when there is an error while restoring transactions.
   void restoreCompletedTransactionsFailed({required SKError error}) {
-    _restoreCompleter!.completeError(error);
+    _restoreCompleter?.completeError(error);
     _transactionRestoreState = _TransactionRestoreState.notRunning;
   }
 
   void paymentQueueRestoreCompletedTransactionsFinished() {
-    _restoreCompleter!.complete();
+    _restoreCompleter?.complete();
 
     // If no restored transactions were received during the restore session
     // emit an empty list of purchase details to inform listeners that the
     // restore session finished without any results.
-    if (_transactionRestoreState ==
-        _TransactionRestoreState.waitingForTransactions) {
+    if (_transactionRestoreState == _TransactionRestoreState.waitingForTransactions) {
       purchaseUpdatedController.add(<PurchaseDetails>[]);
     }
 
     _transactionRestoreState = _TransactionRestoreState.notRunning;
   }
 
-  bool shouldAddStorePayment(
-      {required SKPaymentWrapper payment, required SKProductWrapper product}) {
+  bool shouldAddStorePayment({required SKPaymentWrapper payment, required SKProductWrapper product}) {
     // In this unified API, we always return true to keep it consistent with the behavior on Google Play.
     return true;
   }
