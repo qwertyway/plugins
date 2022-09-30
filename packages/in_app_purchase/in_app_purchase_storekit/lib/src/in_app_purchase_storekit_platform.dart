@@ -161,8 +161,8 @@ class _TransactionObserver implements SKTransactionObserverWrapper {
   }) {
     _transactionRestoreState = _TransactionRestoreState.waitingForTransactions;
     // _restoreCompleter = Completer();
-    return queue.restoreTransactions(applicationUserName: applicationUserName);
-    // return _restoreCompleter!.future;
+    queue.restoreTransactions(applicationUserName: applicationUserName);
+    return Future.value();
   }
 
   void cleanUpRestoredTransactions() {
